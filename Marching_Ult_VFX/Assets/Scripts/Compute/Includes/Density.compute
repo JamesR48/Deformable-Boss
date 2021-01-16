@@ -1,0 +1,107 @@
+﻿static const int numThreads = 8;
+
+RWStructuredBuffer<float4> points;
+int numPointsPerAxis;
+float boundsSize;
+float3 centre;
+float3 offset;
+float spacing;
+float3 worldSize;
+
+//union
+float k;
+
+//box
+float3 boxSize;
+float3 boxOffset;
+
+//sphere
+float sphereRadius;
+float3 sphereOffset;
+
+//torus
+float torusRadiusInner;
+float torusRadiusOuter;
+float3 torusOffset;
+
+//ellipsoid
+float3 ellipsoidRadius;
+
+//link
+float linkLength;
+float linkRadiusInner;
+float linkRadiusOuter;
+
+//capsule
+float3 lineOrigin;
+float3 lineEnd;
+float lineRadius;
+
+
+int indexFromCoord(uint x, uint y, uint z) {
+    return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
+
+float smoothUnion(float d1, float d2, float k) {
+	float h = max(k - abs(d1-d2), 0.0);
+	return( min(d1,d2) - h*h*0.25/k );
+}
+
+float smoothSubstraction(float d1, float d2, float k)
+{
+	float h = max(k - abs(-d1 - d2), 0.0f);
+	return (max(-d1, d2) + h * h * 0.25f / k);
+}
+
+float displacement(float d1, float3 p, float offset)
+{
+	float d2 = sin(offset * p.x) * sin(offset * p.y) * sin(offset * p.z);
+	return d1 + d2;
+}
+
+float box(float3 pos)
+{
+	float3 q = abs(pos) - boxSize;
+	float density = length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+
+	return density;
+}
+
+float sphere(float3 pos, float radius)
+{
+	float density = length(pos) - radius;
+	return density;
+}
+
+float torus(float3 pos, float radiusI, float radiusO)
+{
+	float2 q = float2(length(pos.xy) - radiusI, pos.z);
+	float density = length(q) - radiusO;
+	return density;
+}
+
+float ellipsoid(float3 pos, float3 radius)
+{
+	float k0 = length(pos / radius);
+	float k1 = length(pos / (radius * radius));
+	float density = k0 * (k0 - 1.0) / k1;
+	return density;
+}
+
+
+float link(float3 pos, float le, float radiusI, float radiusO)
+{
+	//float3 q = vec3( p.x, max(abs(p.y)-le,0.0), p.z ); // vertical
+	float3 q = float3(pos.y, max(abs(-pos.x) - le, 0.0), pos.z); //90deg CW rotation (horizontal)
+	float density = length(float2(length(q.xy) - radiusI, q.z)) - radiusO;
+	return density;
+}
+
+float capsule(float3 pos, float3 origin, float3 end, float radius)
+{
+	float3 pa = pos - origin;
+	float3 ba = end - origin;
+	float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0f, 1.0f);
+	float density = length(pa - ba * h) - radius;
+	return density;
+}

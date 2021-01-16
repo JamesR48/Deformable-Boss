@@ -1,0 +1,338 @@
+﻿#pragma kernel March
+#include "/Includes/MarchTables.compute"
+
+static const int numThreads = 8;
+
+SamplerState myLinearClampSampler;
+
+struct Vertex
+{
+	float3 vPosition;
+	float3 vNormal;
+	float3 vColor;
+};
+
+struct Triangle {
+	Vertex v[3];
+};
+
+AppendStructuredBuffer<Triangle> triangles;
+RWStructuredBuffer<float4> points;
+
+//StructuredBuffer<float3> _Normals;
+
+int numPointsPerAxis;
+float isoLevel;
+
+float3 interpolateVerts(float4 v1, float4 v2) {
+    float t = (isoLevel - v1.w) / (v2.w - v1.w);
+    //return float4(v1.xyz + t * (v2.xyz-v1.xyz), 0);
+	return v1.xyz + t * (v2.xyz - v1.xyz);
+}
+
+int indexFromCoord(int x, int y, int z) {
+    return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
+
+float3 SampleBilinear(StructuredBuffer<float3> buffer, float3 uv)
+{
+	int _Width = numPointsPerAxis;
+	int _Height = numPointsPerAxis;
+	int _Depth = numPointsPerAxis;
+
+	int x = uv.x;
+	int y = uv.y;
+	int z = uv.z;
+
+	int X = _Width;
+	int XY = _Width * _Height;
+
+	float fx = uv.x - x;
+	float fy = uv.y - y;
+	float fz = uv.z - z;
+
+	int xp1 = min(_Width - 1, x + 1);
+	int yp1 = min(_Height - 1, y + 1);
+	int zp1 = min(_Depth - 1, z + 1);
+
+	float3 x0 = buffer[x + y * X + z * XY] * (1.0f - fx) + buffer[xp1 + y * X + z * XY] * fx;
+	float3 x1 = buffer[x + y * X + zp1 * XY] * (1.0f - fx) + buffer[xp1 + y * X + zp1 * XY] * fx;
+
+	float3 x2 = buffer[x + yp1 * X + z * XY] * (1.0f - fx) + buffer[xp1 + yp1 * X + z * XY] * fx;
+	float3 x3 = buffer[x + yp1 * X + zp1 * XY] * (1.0f - fx) + buffer[xp1 + yp1 * X + zp1 * XY] * fx;
+
+	float3 z0 = x0 * (1.0f - fz) + x1 * fz;
+	float3 z1 = x2 * (1.0f - fz) + x3 * fz;
+
+	return z0 * (1.0f - fy) + z1 * fy;
+}
+
+//void cubes(int numTris, float3 avgPos, float3 avgNorm, float avgWeight, int cubeIndex, float4 cubeCorners[8]) {
+void cubes(int numTris, float3 avgPosX, float3 avgPosY, float3 avgPosZ, int cubeIndex, float4 cubeCorners[8], int3 index)
+{
+	// Create triangles for current cube configuration
+	for (int i = 0; triangulation[cubeIndex][i] != -1; i += 3) {
+		// Get indices of corner points A and B for each of the three edges
+		// of the cube that need to be joined to form the triangle.
+		int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
+		int b0 = cornerIndexBFromEdge[triangulation[cubeIndex][i]];
+
+		int a1 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 1]];
+		int b1 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 1]];
+
+		int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 2]];
+		int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
+
+		Triangle tri;
+
+		//tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+		//tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+		//tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+		
+		Vertex v0;
+		Vertex v1;
+		Vertex v2;
+
+		v0.vPosition = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+		v1.vPosition = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+		v2.vPosition = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+
+		/*if (cubeCorners[a0].w < 0.0 || cubeCorners[b0].w < 0.0)
+		{
+			v0.vColor = float3(1,0,0);
+		}else if(cubeCorners[a0].w >= 0.0 || cubeCorners[b0].w >= 0.0)
+		{
+			v0.vColor = float3(1, 1, 1);
+		}
+		if (cubeCorners[a1].w < 0.0 || cubeCorners[b1].w < 0.0)
+		{
+			v1.vColor = float3(1, 0, 0);
+		}
+		else if (cubeCorners[a1].w >= 0.0 || cubeCorners[b1].w >= 0.0)
+		{
+			v1.vColor = float3(1, 1, 1);
+		}
+		if (cubeCorners[a2].w < 0.0 || cubeCorners[b2].w < 0.0)
+		{
+			v2.vColor = float3(1, 0, 0);
+		}
+		else if (cubeCorners[a2].w >= 0.0 || cubeCorners[b2].w >= 0.0)
+		{
+			v2.vColor = float3(1, 1, 1);
+		}*/
+
+		float vari = 0.0;
+
+		if (cubeCorners[0].w < vari || cubeCorners[1].w < vari || cubeCorners[2].w < vari
+			|| cubeCorners[3].w < vari || cubeCorners[4].w < vari || cubeCorners[5].w < vari
+			|| cubeCorners[6].w < vari || cubeCorners[7].w < vari
+			)
+		{
+			v0.vColor = float3(1, 0, 0);
+			v1.vColor = float3(1, 0, 0);
+			v2.vColor = float3(1, 0, 0);
+		}
+		else
+		{
+			v0.vColor = float3(1, 1, 1);
+			v1.vColor = float3(1, 1, 1);
+			v2.vColor = float3(1, 1, 1);
+		}
+
+		/*v0.vColor = float3(1, 0, 0);
+		v1.vColor = float3(0, 1, 0);
+		v2.vColor = float3(0, 0, 1);*/
+
+		/*for (int i = 0; i < 8; i++)
+		{
+			if (cubeCorners[i].w < 0.2)
+			{
+				v0.vColor = float3(1, 0, 0);
+				v1.vColor = float3(1, 0, 0);
+				v2.vColor = float3(1, 0, 0);
+			}
+			else
+			{
+				v0.vColor = float3(1, 1, 1);
+				v1.vColor = float3(1, 1, 1);
+				v2.vColor = float3(1, 1, 1);
+			}
+		}*/
+
+		/*if (cubeCorners[0].w < 0.0)
+		{
+			v0.vColor = float3(1, 0, 0);
+			v1.vColor = float3(1, 0, 0);
+			v2.vColor = float3(1, 0, 0);
+		}
+		else
+		{
+			v0.vColor = float3(1, 1, 1);
+			v1.vColor = float3(1, 1, 1);
+			v2.vColor = float3(1, 1, 1);
+		}*/
+
+		//v0.vNormal = float3(0, 0, 0); v1.vNormal = float3(0, 0, 0); v2.vNormal = float3(0, 0, 0);
+		//v0.vNormal = normalize(SampleBilinear(_Normals, v0.vPosition));
+		//v1.vNormal = normalize(SampleBilinear(_Normals, v1.vPosition));
+		//v2.vNormal = normalize(SampleBilinear(_Normals, v2.vPosition));
+
+		//Flat shading normals
+		/*v0.vNormal += cross(v1.vPosition -v0.vPosition, v2.vPosition -v0.vPosition);
+		v1.vNormal += cross(v1.vPosition - v0.vPosition, v2.vPosition - v0.vPosition);
+		v2.vNormal += cross(v1.vPosition - v0.vPosition, v2.vPosition - v0.vPosition);*/
+
+		//Smooth shading normals
+		v0.vNormal = float3(0, 0, 0); v1.vNormal = float3(0, 0, 0); v2.vNormal = float3(0, 0, 0);
+
+		float3 e1 = v1.vPosition - v0.vPosition;
+		float3 e2 = v2.vPosition - v0.vPosition;
+		float3 no = cross(e1, e2);
+
+		v0.vNormal += no;
+		v1.vNormal += no;
+		v2.vNormal += no;
+		
+		/*float h = 0.001;
+
+		v0.vNormal = normalize
+		(
+			float3(1.0f, -1.0f, -1.0f) * v0.vPosition + float3((h), -(h), -(h))
+			+ float3(-1.0f, -1.0f, 1.0f) * v0.vPosition +float3(-(h), -(h), (h))
+			+ float3(-1.0f, 1.0f, -1.0f) * v0.vPosition +float3(-(h), (h), -(h))
+			+ float3(1.0f, 1.0f, 1.0f) * v0.vPosition +float3((h), (h), (h))
+		);
+
+		v1.vNormal = normalize
+		(
+			float3(1.0f, -1.0f, -1.0f) * v1.vPosition + float3((h), -(h), -(h))
+			+ float3(-1.0f, -1.0f, 1.0f) * v1.vPosition + float3(-(h), -(h), (h))
+			+ float3(-1.0f, 1.0f, -1.0f) * v1.vPosition + float3(-(h), (h), -(h))
+			+ float3(1.0f, 1.0f, 1.0f) * v1.vPosition + float3((h), (h), (h))
+		);
+
+		v2.vNormal = normalize
+		(
+			float3(1.0f, -1.0f, -1.0f) * v2.vPosition + float3((h), -(h), -(h))
+			+ float3(-1.0f, -1.0f, 1.0f) * v2.vPosition + float3(-(h), -(h), (h))
+			+ float3(-1.0f, 1.0f, -1.0f) * v2.vPosition + float3(-(h), (h), -(h))
+			+ float3(1.0f, 1.0f, 1.0f) * v2.vPosition + float3((h), (h), (h))
+		);*/
+
+		/*v0.vNormal = abs(v0.vPosition);
+		v1.vNormal = abs(v1.vPosition);
+		v2.vNormal = abs(v2.vPosition);*/
+
+		tri.v[0] = v0;
+		tri.v[1] = v1;
+		tri.v[2] = v2;
+
+		triangles.Append(tri);
+
+		//float3 c = cross(tri.vertexB - tri.vertexA, tri.vertexC - tri.vertexA);
+		//float w = length(c);
+		//avgPos += w * (tri.vertexA + tri.vertexB + tri.vertexC);
+		//if (w > kEpsilon)
+		//	avgNorm += w * normalize(c);
+		//avgWeight += w;
+
+		/*avgPosX += tri.vertexA;
+		avgPosY += tri.vertexB;
+		avgPosZ += tri.vertexC;
+
+		numTris += 1;*/
+	}
+
+	/*if (numTris > 0)
+	{
+		Triangle tria;
+		tria.vertexA = avgPosX / numTris;
+		tria.vertexB = avgPosY / numTris;
+		tria.vertexC = avgPosZ / numTris;
+
+		triangles.Append(tria);
+	}*/
+}
+
+//Samples a structed buffer same as a bilinear filter texture.
+
+[numthreads(numThreads,numThreads,numThreads)]
+void March (int3 id : SV_DispatchThreadID)
+{   
+    // Stop one point before the end because voxel includes neighbouring points
+    if (id.x >= numPointsPerAxis-1 || id.y >= numPointsPerAxis-1 || id.z >= numPointsPerAxis-1) {
+        return;
+    }
+
+    // 8 corners of the current cube
+    float4 cubeCorners[8] = {
+        points[indexFromCoord(id.x, id.y, id.z)],
+        points[indexFromCoord(id.x + 1, id.y, id.z)],
+        points[indexFromCoord(id.x + 1, id.y, id.z + 1)],
+        points[indexFromCoord(id.x, id.y, id.z + 1)],
+        points[indexFromCoord(id.x, id.y + 1, id.z)],
+        points[indexFromCoord(id.x + 1, id.y + 1, id.z)],
+        points[indexFromCoord(id.x + 1, id.y + 1, id.z + 1)],
+        points[indexFromCoord(id.x, id.y + 1, id.z + 1)]
+    };
+
+    // Calculate unique index for each cube configuration.
+    // There are 256 possible values
+    // A value of 0 means cube is entirely inside surface; 255 entirely outside.
+    // The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
+    int cubeIndex = 0;
+    if (cubeCorners[0].w < isoLevel) cubeIndex |= 1;
+    if (cubeCorners[1].w < isoLevel) cubeIndex |= 2;
+    if (cubeCorners[2].w < isoLevel) cubeIndex |= 4;
+    if (cubeCorners[3].w < isoLevel) cubeIndex |= 8;
+    if (cubeCorners[4].w < isoLevel) cubeIndex |= 16;
+    if (cubeCorners[5].w < isoLevel) cubeIndex |= 32;
+    if (cubeCorners[6].w < isoLevel) cubeIndex |= 64;
+    if (cubeCorners[7].w < isoLevel) cubeIndex |= 128;
+
+	int numTris = 0;
+	float3 avgPosX = 0.0f;
+	float3 avgPosY = 0.0f;
+	float3 avgPosZ = 0.0f;
+	/*float3 avgNorm = 0.0f;
+	float avgWeight = 0.0f;*/
+
+	//cubes(numTris, avgPos, avgNorm, avgWeight, cubeIndex, cubeCorners);
+	cubes(numTris, avgPosX, avgPosY, avgPosZ, cubeIndex, cubeCorners, id);
+
+	//if (numTris > 0)
+	//{
+	//	Triangle tri;
+	//	tri.vertexA = avgPosX/1;
+	//	tri.vertexB = avgPosY / 1;
+	//	tri.vertexC = avgPosZ / 1;
+
+	//	triangles.Append(tri);
+
+		//avgPos /= avgWeight * 3.0;
+		//avgNorm = normalize(avgNorm);
+	//}
+
+    // Create triangles for current cube configuration
+    //for (int i = 0; triangulation[cubeIndex][i] != -1; i +=3) {
+    //    // Get indices of corner points A and B for each of the three edges
+    //    // of the cube that need to be joined to form the triangle.
+    //    int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
+    //    int b0 = cornerIndexBFromEdge[triangulation[cubeIndex][i]];
+
+    //    int a1 = cornerIndexAFromEdge[triangulation[cubeIndex][i+1]];
+    //    int b1 = cornerIndexBFromEdge[triangulation[cubeIndex][i+1]];
+
+    //    int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i+2]];
+    //    int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i+2]];
+
+    //    Triangle tri;
+    //    tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+    //    tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+    //    tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+
+    //    triangles.Append(tri);
+    //}
+
+
+}

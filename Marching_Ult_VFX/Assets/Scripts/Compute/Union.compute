@@ -1,0 +1,72 @@
+﻿#pragma kernel Density
+#include "/Includes/Density.compute"
+
+float off;
+
+bool fire;
+bool cond;
+
+float density;
+
+[numthreads(numThreads, numThreads, numThreads)]
+void Density(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x >= numPointsPerAxis || id.y >= numPointsPerAxis || id.z >= numPointsPerAxis) {
+		return;
+	}
+
+	int index = indexFromCoord(id.x, id.y, id.z);
+
+	float3 pos = centre + id * spacing - boundsSize / 2;
+	
+	if (!cond) 
+	{
+		//Head
+	//float skull = sphere(pos + float3(-3.5, -0.5, 0.0), 1.5);
+		float skull = sphere(pos + float3(-4.5, 0.5, 0.0), 1.5);
+		float angle = 10;
+		float3 linkRotation = float3((pos.x - 5.0) * cos(angle) - (pos.y) * sin(angle), (pos.y) * cos(angle) + (pos.x - 5.0) * sin(angle), pos.z);
+		//float mouth = link(pos+ float3(-5.0, 0.0, 0.0), 2, 1, 0.1);
+		//float mouth = link(linkRotation + float3(3.5,-3.5,0.0), 2, 1, 0.1);
+		float mouth = link(linkRotation + float3(1.5, 0.0, 0.0), 2, 1, 0.1);
+
+		float3 ellipRotation = float3((pos.x - 7.4) * cos(angle) - (pos.y + 1.6) * sin(angle), (pos.y + 1.6) * cos(angle) + (pos.x - 7.4) * sin(angle), pos.z);
+		//float ellip = ellipsoid(ellipRotation + float3(3.5, -3.5, 0.0), float3(0.5, 0.5, 0.15));
+		float ellip = ellipsoid(ellipRotation + float3(1.5, 0.0, 0.0), float3(0.5, 0.5, 0.15));
+
+		float preHeadUnion = smoothUnion(skull, mouth, k);
+		float headUnion = smoothUnion(preHeadUnion, ellip, k);
+
+		//Body
+		//float tail = displacement(sphere(pos + float3(5.4, -1.0, 0.0), 4.0), pos + float3(5.4, -1.0, 0.0));
+		
+		//float tail = displacement(sphere(pos + float3(4.8, -1.0, 0.0)+ (sphereOffset), 4.0), pos + float3(5.4, -1.0, 0.0), off);
+		float tail = sphere(pos + float3(4.8, -1.0, 0.0) + (sphereOffset), 4.0);
+		//float tail = displacement(sphere(pos + float3(4.8, -1.0, 0.0), 4.0), pos + sphereOffset, off);
+		//float chest = displacement(sphere(pos + float3(0.0, 0.0, 0.0), 3.0), pos + float3(0.0, 0.0, 0.0));
+		
+		//float chest = displacement(sphere(pos + float3(-1.0, 0.0, 0.0), 3.0), pos + float3(0.0, 0.0, 0.0), off);
+		float chest = sphere(pos + float3(-1.0, 0.0, 0.0), 3.0);
+		//float chest = displacement(sphere(pos + float3(-1.0, 0.0, 0.0), 3.0), pos + sphereOffset, off);
+
+		float bodyUnion = smoothUnion(tail, chest, k);
+		density = smoothUnion(headUnion, bodyUnion, k);
+		
+		if (fire)
+		{
+			density = smoothSubstraction(sphere(pos + boxOffset, sphereRadius), density, 0.25);
+			points[index] = float4(pos, density);
+		}
+		points[index] = float4(pos, density);
+	}
+	else
+	{
+		if (fire)
+		{
+			density = smoothSubstraction(sphere(pos + boxOffset, sphereRadius), points[index].w, 0.25);
+			points[index] = float4(pos, density);
+		}
+		points[index] = points[index];
+	}
+
+}

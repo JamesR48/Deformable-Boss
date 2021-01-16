@@ -1,0 +1,187 @@
+﻿#pragma kernel March
+#include "/Includes/MarchTables.compute"
+
+static const int numThreads = 8;
+
+struct Vertex
+{
+	float4 vPosition;
+	float3 vNormal;
+};
+
+struct Triangle
+{
+	Vertex verts[3];
+};
+
+AppendStructuredBuffer<Triangle> triangles;
+RWStructuredBuffer<float4> points;
+
+StructuredBuffer<float3> _Normals;
+
+int numPointsPerAxis;
+float isoLevel;
+
+float boundsSize;
+//float3 centre;
+float spacing;
+
+// edgeConnection lists the index of the endpoint vertices for each of the 12 edges of the cube
+static int2 edgeConnection[12] =
+{
+	int2(0,1), int2(1,2), int2(2,3), int2(3,0), int2(4,5), int2(5,6), int2(6,7), int2(7,4), int2(0,4), int2(1,5), int2(2,6), int2(3,7)
+};
+
+// edgeDirection lists the direction vector (vertex1-vertex0) for each edge in the cube
+static float3 edgeDirection[12] =
+{
+	float3(1.0f, 0.0f, 0.0f),float3(0.0f, 1.0f, 0.0f),float3(-1.0f, 0.0f, 0.0f),float3(0.0f, -1.0f, 0.0f),
+	float3(1.0f, 0.0f, 0.0f),float3(0.0f, 1.0f, 0.0f),float3(-1.0f, 0.0f, 0.0f),float3(0.0f, -1.0f, 0.0f),
+	float3(0.0f, 0.0f, 1.0f),float3(0.0f, 0.0f, 1.0f),float3(0.0f, 0.0f, 1.0f),float3(0.0f,  0.0f, 1.0f)
+};
+
+// vertexOffset lists the positions, relative to vertex0, of each of the 8 vertices of a cube
+static float3 vertexOffset[8] =
+{
+	float3(0, 0, 0),float3(1, 0, 0),float3(1, 1, 0),float3(0, 1, 0),
+	float3(0, 0, 1),float3(1, 0, 1),float3(1, 1, 1),float3(0, 1, 1)
+};
+
+float3 interpolateVerts(float4 v1, float4 v2) {
+	float t = (isoLevel - v1.w) / (v2.w - v1.w);
+	return v1.xyz + t * (v2.xyz - v1.xyz);
+}
+
+// GetOffset finds the approximate point of intersection of the surface
+// between two points with the values v1 and v2
+float GetOffset(float v1, float v2)
+{
+	float delta = v2 - v1;
+	return (delta == 0.0f) ? 0.5f : (isoLevel - v1) / delta;
+}
+
+int indexFromCoord(int x, int y, int z) {
+	return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
+}
+
+float3 SampleBilinear(StructuredBuffer<float3> buffer, float3 uv)
+{
+	int _Width = numPointsPerAxis - 1;
+	int _Height = numPointsPerAxis - 1;
+	int _Depth = numPointsPerAxis - 1;
+
+	int x = uv.x;
+	int y = uv.y;
+	int z = uv.z;
+
+	int X = _Width;
+	int XY = _Width * _Height;
+
+	float fx = uv.x - x;
+	float fy = uv.y - y;
+	float fz = uv.z - z;
+
+	int xp1 = min(_Width - 1, x + 1);
+	int yp1 = min(_Height - 1, y + 1);
+	int zp1 = min(_Depth - 1, z + 1);
+
+	float3 x0 = buffer[x + y * X + z * XY] * (1.0f - fx) + buffer[xp1 + y * X + z * XY] * fx;
+	float3 x1 = buffer[x + y * X + zp1 * XY] * (1.0f - fx) + buffer[xp1 + y * X + zp1 * XY] * fx;
+
+	float3 x2 = buffer[x + yp1 * X + z * XY] * (1.0f - fx) + buffer[xp1 + yp1 * X + z * XY] * fx;
+	float3 x3 = buffer[x + yp1 * X + zp1 * XY] * (1.0f - fx) + buffer[xp1 + yp1 * X + zp1 * XY] * fx;
+
+	float3 z0 = x0 * (1.0f - fz) + x1 * fz;
+	float3 z1 = x2 * (1.0f - fz) + x3 * fz;
+
+	return z0 * (1.0f - fy) + z1 * fy;
+}
+
+//Samples a structed buffer same as a bilinear filter texture.
+
+[numthreads(numThreads, numThreads, numThreads)]
+void March(int3 id : SV_DispatchThreadID)
+{
+	// Stop one point before the end because voxel includes neighbouring points
+	if (id.x >= numPointsPerAxis - 1 || id.y >= numPointsPerAxis - 1 || id.z >= numPointsPerAxis - 1) {
+		return;
+	}
+
+	float3 centre = float3(0,0,0);
+	//float3 pos = float3(id);
+	float3 pos = centre + id * spacing - boundsSize / 2;
+	//float3 centre = float3(numPointsPerAxis, numPointsPerAxis, numPointsPerAxis) / 2.0;
+
+	// 8 corners of the current cube
+	float cubeCorners[8] = {
+		points[indexFromCoord(id.x, id.y, id.z)].w,
+		points[indexFromCoord(id.x + 1, id.y, id.z)].w,
+		points[indexFromCoord(id.x + 1, id.y, id.z + 1)].w,
+		points[indexFromCoord(id.x, id.y, id.z + 1)].w,
+		points[indexFromCoord(id.x, id.y + 1, id.z)].w,
+		points[indexFromCoord(id.x + 1, id.y + 1, id.z)].w,
+		points[indexFromCoord(id.x + 1, id.y + 1, id.z + 1)].w,
+		points[indexFromCoord(id.x, id.y + 1, id.z + 1)].w
+	};
+
+	// Calculate unique index for each cube configuration.
+	// There are 256 possible values
+	// A value of 0 means cube is entirely inside surface; 255 entirely outside.
+	// The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
+	int cubeIndex = 0;
+	float3 edgeVertex[12];
+
+	//Find which vertices are inside of the surface and which are outside
+	for (int i = 0; i < 8; i++) 
+	{
+		if (cubeCorners[i] <= isoLevel) cubeIndex |= 1 << i;
+	}
+
+	//Find which edges are intersected by the surface
+	int edgeFlags = edges[cubeIndex];
+
+	// no connections, return
+	if (edgeFlags == 0) return;
+
+	//Find the point of intersection of the surface with each edge
+	for (int i = 0; i < 12; i++)
+	{
+		//if there is an intersection on this edge
+		if ((edgeFlags & (1 << i)) != 0)
+		{
+			float offset = GetOffset(cubeCorners[edgeConnection[i].x], cubeCorners[edgeConnection[i].y]);
+			//float offset = interpolateVerts( cubeCorners[edgeConnection[i].x], cubeCorners[edgeConnection[i].y]);
+
+			edgeVertex[i] = pos + (vertexOffset[edgeConnection[i].x] + offset * edgeDirection[i]);
+		}
+	}
+
+	int idx = indexFromCoord(id.x, id.y, id.z);
+	//Save the triangles that were found. There can be up to five per cube
+	for (int i = 0; i < 5; i++)
+	{
+		//If the connection table is not -1 then this a triangle.
+		if (triangulation1D[cubeIndex * 16 + 3 * i] >= 0)
+		{
+			Vertex verts[3];
+
+			for (int j = 0; j < 3; j++)
+			{
+				int v = triangulation1D[cubeIndex * 16 + (3 * i + j)];
+
+				float3 position = edgeVertex[v];
+
+				verts[j].vPosition = float4(position - centre, 1.0) / (float)numPointsPerAxis;
+				verts[j].vNormal = SampleBilinear(_Normals, position);
+				//verts[j].normal = _Normals[idx];
+			}
+
+			Triangle tri;
+			tri.verts[0] = verts[0];
+			tri.verts[1] = verts[1];
+			tri.verts[2] = verts[2];
+			triangles.Append(tri);
+		}
+	}
+
+}
