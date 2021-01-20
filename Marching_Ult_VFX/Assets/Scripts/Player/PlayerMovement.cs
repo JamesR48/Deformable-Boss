@@ -20,6 +20,10 @@ public class PlayerMovement : MonoBehaviour
     public GameObject movementCamera;
     public GameObject aimCamera;
 
+    public float knockBackForce;
+    public float knockBackTime;
+    float knockBackCounter;
+
     [HideInInspector]
     public bool isAiming = false;
     public bool isFiring = false;
@@ -29,8 +33,13 @@ public class PlayerMovement : MonoBehaviour
     float mouseX, mouseY;
     float horizontal, vertical;
 
+    Vector3 movement;
+
     public Cinemachine.AxisState xAxis; //camera pitch
     public Cinemachine.AxisState yAxis; //camera yaw
+
+    float gravity = 9.8f;
+    float verticalSpeed = 0f; //current vertical speed
 
     private void Awake()
     {
@@ -44,18 +53,30 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!playerIsDead)
         {
-            MouseRotation();
 
-            if (Input.GetMouseButton(1)) //right click held down
+            if(knockBackCounter <= 0)
             {
-                PlayerAim();
-                PlayerMove();
+                if (Input.GetMouseButton(1)) //right click held down
+                {
+                    PlayerAim();
+                    PlayerMove();
+                }
+                else
+                {
+                    PlayerStopAim();
+                    PlayerMove();
+                }
             }
             else
             {
-                PlayerStopAim();
-                PlayerMove();
+                if (isAiming)
+                {   
+                    PlayerStopAim();
+                }
+                knockBackCounter -= Time.deltaTime;
             }
+
+            MouseRotation();
 
             if (playerHealth == 0)
             {
@@ -73,7 +94,16 @@ public class PlayerMovement : MonoBehaviour
         horizontal = Input.GetAxis("Horizontal");
         vertical = Input.GetAxis("Vertical");
 
-        Vector3 movement = new Vector3(horizontal, 0, vertical);
+        if (characterController.isGrounded)
+        {
+            verticalSpeed = 0;
+        }
+        else
+        {
+            verticalSpeed -= gravity * Time.deltaTime;
+        }
+
+        movement = new Vector3(horizontal, verticalSpeed, vertical);
 
         movement = transform.TransformDirection(movement);
 
@@ -86,9 +116,9 @@ public class PlayerMovement : MonoBehaviour
         movement = Vector3.ClampMagnitude(movement, 1f);
         characterController.Move(movement * Time.deltaTime * moveSpeed);
 
-        target.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
-        float yawCamera = Camera.main.transform.rotation.eulerAngles.y;
-        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, yawCamera, 0), turnSpeed * Time.deltaTime);
+        //target.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
+        //float yawCamera = Camera.main.transform.rotation.eulerAngles.y;
+        //transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, yawCamera, 0), turnSpeed * Time.deltaTime);
 
         //animator.SetFloat("Speed", vertical);
 
@@ -126,10 +156,11 @@ public class PlayerMovement : MonoBehaviour
         //transform.rotation = Quaternion.Euler(0, mouseX, 0);
         xAxis.Update(Time.deltaTime);
         yAxis.Update(Time.deltaTime);
-        //target.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
-        //float yawCamera = Camera.main.transform.rotation.eulerAngles.y;
-        //transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, yawCamera, 0), turnSpeed * Time.deltaTime);
-        //transform.forward = Vector3.Lerp(transform.forward, Camera.main.transform.forward, turnSpeed * Time.deltaTime);
+
+        /////////////////////////// NOT SURE ABOUT DOING THIS HERE /////////////////////////
+        target.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
+        float yawCamera = Camera.main.transform.rotation.eulerAngles.y;
+        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(0, yawCamera, 0), turnSpeed * Time.deltaTime);
     }
 
     void PlayerAim()
@@ -149,5 +180,26 @@ public class PlayerMovement : MonoBehaviour
         movementCamera.SetActive(true);
         aimCamera.SetActive(false);
         reticle.SetActive(false);
+    }
+
+    public void KnockBack(Vector3 direction)
+    {
+        knockBackCounter = knockBackTime;
+
+        direction *= -1;
+
+        if (characterController.isGrounded)
+        {
+            verticalSpeed = 0;
+        }
+        else
+        {
+            verticalSpeed -= gravity * Time.deltaTime;
+        }
+
+        direction.y = verticalSpeed;
+
+        movement = direction * knockBackForce;
+        characterController.Move(movement * Time.deltaTime * moveSpeed);
     }
 }

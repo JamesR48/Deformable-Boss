@@ -4525,9 +4525,12 @@ MonoBehaviour:
   reticle: {fileID: 652439831}
   movementCamera: {fileID: 418014355}
   aimCamera: {fileID: 1114733960}
+  knockBackForce: 10
+  knockBackTime: 1
   isAiming: 0
   isFiring: 0
   playerHealth: 3
+  playerIsDead: 0
   xAxis:
     Value: 0
     m_SpeedMode: 0
