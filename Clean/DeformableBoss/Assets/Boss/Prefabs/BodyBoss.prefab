@@ -16,8 +16,11 @@ GameObject:
   - component: {fileID: 420413530490431824}
   - component: {fileID: 8580769299923287723}
   - component: {fileID: 5381504329717318522}
+  - component: {fileID: 5506244109397737811}
+  - component: {fileID: 1480983873631282007}
   - component: {fileID: 4386875665303531956}
   - component: {fileID: 9085468795621886751}
+  - component: {fileID: 3801340158912211744}
   m_Layer: 0
   m_Name: BodyBoss
   m_TagString: Untagged
@@ -153,6 +156,7 @@ MonoBehaviour:
   dist: 0
   grounded: 0
   rotationSpeed: {fileID: 0}
+  isDead: {fileID: 0}
 --- !u!114 &4997604886979544780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,6 +190,7 @@ MonoBehaviour:
   rotationAngle: -45
   chargingSpeed: 20
   releaseSpeed: 40
+  isAttacking: {fileID: 0}
 --- !u!114 &8580769299923287723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -219,6 +224,44 @@ MonoBehaviour:
     ConstantValue: 0
     Variable: {fileID: 11400000, guid: 837341f18ac836042a8e360ad7408f35, type: 2}
   deathEvent: {fileID: 0}
+--- !u!114 &5506244109397737811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4736736366884885688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89f7a91d1b2f2704997fd6ad4a0c0647, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isAttacking: {fileID: 11400000, guid: d0d7c0584b670564a922465c4dc223fe, type: 2}
+  desiredSufaceDist: {fileID: 11400000, guid: e7ec89cd214c7e94f8e94839e3351da0, type: 2}
+  isDead: {fileID: 11400000, guid: d8a79942040110647a004c88fb93bd57, type: 2}
+  rotationAngle: -45
+  riseSpeed: 15
+  shakeSpeed: 30
+  shakeAmplitude: 60
+--- !u!114 &1480983873631282007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4736736366884885688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13fbbc68202bcb744a1118981f3331c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  componentsToDisable:
+  - {fileID: 4386875665303531956}
+  - {fileID: 9085468795621886751}
+  - {fileID: 8580769299923287723}
+  - {fileID: 5381504329717318522}
+  - {fileID: 4997604886979544780}
+  - {fileID: 420413530490431824}
 --- !u!114 &4386875665303531956
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -266,6 +309,58 @@ MonoBehaviour:
       - m_Target: {fileID: 5381504329717318522}
         m_TargetAssemblyTypeName: Health, Assembly-CSharp
         m_MethodName: TakeDamage
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &3801340158912211744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4736736366884885688}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb26ae03704e18549862feef38a1594d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Event: {fileID: 11400000, guid: 7ca5933c7c9ccc540b037366b378f747, type: 2}
+  Response:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 5506244109397737811}
+        m_TargetAssemblyTypeName: ProceduralDeath, Assembly-CSharp
+        m_MethodName: SetDead
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 420413530490431824}
+        m_TargetAssemblyTypeName: UnityEngine.MonoBehaviour, UnityEngine
+        m_MethodName: StopAllCoroutines
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1480983873631282007}
+        m_TargetAssemblyTypeName: DisableComponents, Assembly-CSharp
+        m_MethodName: DisableList
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

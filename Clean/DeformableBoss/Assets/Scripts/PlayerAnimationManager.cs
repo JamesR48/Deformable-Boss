@@ -61,6 +61,7 @@ public class PlayerAnimationManager : MonoBehaviour
     public void DeathAnim()
     {
         playerIsDeath = true;
+        playerAnimator.SetLayerWeight(1, 0);
         playerAnimator.Play("Death");
     }
 
@@ -71,4 +72,5 @@ public class PlayerAnimationManager : MonoBehaviour
         rotationAngle = rotationAngle > 90 ? rotationAngle - 360 : rotationAngle;
         return rotationAngle;
     }
+
 }

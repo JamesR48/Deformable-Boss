@@ -37,6 +37,7 @@ public class BezierMotion : MonoBehaviour
                 bezierTime = 0;
             }
             transform.position = QuadraticBezier(bezierTime, currentEndPoint);
+            transform.LookAt(-currentEndPoint);
         }
     }
 

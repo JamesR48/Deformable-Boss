@@ -141,7 +141,7 @@ public class MeshGenerator : MonoBehaviour
         mat.SetVector("skeleChest", new Vector4(chestParent.position.x, chestParent.position.y, chestParent.position.z, 1.0f));
         mat.SetVector("skeleMouth", new Vector4(mouthParent.position.x, mouthParent.position.y, mouthParent.position.z, 1.0f));
         
-        Graphics.DrawProceduralIndirect(mat, new Bounds(chunk.gameObject.transform.position, chunk.gameObject.transform.lossyScale), MeshTopology.Triangles, argBuffer, 0, null, null, UnityEngine.Rendering.ShadowCastingMode.On, true);
+        Graphics.DrawProceduralIndirect(mat, new Bounds(chunk.gameObject.transform.position, chunk.gameObject.transform.lossyScale * 8), MeshTopology.Triangles, argBuffer, 0, null, null, UnityEngine.Rendering.ShadowCastingMode.On, true);
     }
 
     public void UpdateAllChunks()
@@ -245,17 +245,17 @@ public class MeshGenerator : MonoBehaviour
         if (creatureParent)
         {
             chunk.transform.parent = creatureParent;
-            chunk.transform.localPosition = new Vector3(0f, 2.7f, -0.7f);
+            chunk.transform.localPosition = new Vector3(0f, 0.75f, -0.7f);
         }
 
         tailParent.parent = chunk.transform;
-        tailParent.localPosition = new Vector3(-4.7f,1f, 0f);
+        tailParent.localPosition = new Vector3(-4.7f, 1f, 0f);
         skullParent.parent = chunk.transform;
-        skullParent.localPosition = new Vector3(4.5f, -0.5f, 0f);
+        skullParent.localPosition = new Vector3(4.5f, -0.01f, 0f);
         chestParent.parent = chunk.transform;
-        chestParent.localPosition = new Vector3(1f,0f,0f);
+        chestParent.localPosition = new Vector3(1f, 0.11f, 0f);
         mouthParent.parent = chunk.transform;
-        mouthParent.localPosition = new Vector3(8.54f, -2.34f, 0f);
+        mouthParent.localPosition = new Vector3(8.43f, -1.06f, 0f);
 
         bullet.parent = chunk.transform;
         bullet.localPosition = new Vector3(20, 20, 20);

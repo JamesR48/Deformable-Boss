@@ -10,10 +10,16 @@ public class ProceduralAttack : MonoBehaviour
     public float chargingSpeed = 20;
     public float releaseSpeed = 40;
 
-    bool isAttacking = false;
+    //bool isAttacking = false;
+    public BoolVariable isAttacking;
     bool attack = false;
     Quaternion newRotation;
     float eulerRotX = 0, eulerRotY = 0, eulerRotZ = 0;
+
+    void Awake()
+    {
+        isAttacking.SetValue(false);    
+    }
 
     // Update is called once per frame
     void Update()
@@ -28,7 +34,7 @@ public class ProceduralAttack : MonoBehaviour
 
     void AttackMotion()
     {
-        if (isAttacking)
+        if (isAttacking.Value)
         {
             if (desiredSufaceDist.Value > -15)
             {
@@ -56,6 +62,7 @@ public class ProceduralAttack : MonoBehaviour
                 newRotation = Quaternion.Euler(eulerRotX, eulerRotY, eulerRotZ);
                 transform.rotation = Quaternion.Slerp(transform.rotation, newRotation, Time.deltaTime * releaseSpeed);
             }
+            desiredSufaceDist.SetValue(-6);
         }
     }
 
@@ -63,10 +70,10 @@ public class ProceduralAttack : MonoBehaviour
     {
         attack = true;
         yield return new WaitForSeconds(3f);
-        isAttacking = true; //raiseAttackMotionEvent()
+        isAttacking.SetValue(true); //raiseAttackMotionEvent()
         yield return new WaitForSeconds(5f);
-        isAttacking = false; //raiseEndAttackMotionEvent()
-        desiredSufaceDist.SetValue(-6);
+        isAttacking.SetValue(false); //raiseEndAttackMotionEvent()
+        //desiredSufaceDist.SetValue(-6);
         yield return new WaitForSeconds(0.1f);
         attackEvent.Raise();  //raiseAttackEvent()
         attack = false;

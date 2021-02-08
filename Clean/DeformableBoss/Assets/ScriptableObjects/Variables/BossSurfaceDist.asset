@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af50c6f82f968ff4da162dc1b48aa575, type: 3}
   m_Name: BossSurfaceDist
   m_EditorClassIdentifier: 
-  Value: -6
+  Value: -12.008298

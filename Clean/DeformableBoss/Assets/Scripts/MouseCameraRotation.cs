@@ -24,8 +24,8 @@ public class MouseCameraRotation : MonoBehaviour
 
     public void MouseRotateCam()
     {
-        xAxis.Update(Time.deltaTime);
-        yAxis.Update(Time.deltaTime);
+        xAxis.Update(Time.deltaTime * 0.8f);
+        yAxis.Update(Time.deltaTime * 0.8f);
 
         target.eulerAngles = new Vector3(yAxis.Value, xAxis.Value, 0);
         //float yawCamera = Camera.main.transform.rotation.eulerAngles.y;

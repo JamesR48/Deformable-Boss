@@ -240,7 +240,7 @@ MonoBehaviour:
   lastStep: 0
   solidLayer:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 16384
   stepRadius: 0.25
 --- !u!1 &5960942997669804172
 GameObject:

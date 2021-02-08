@@ -16,6 +16,8 @@ public class LaserHeatGun : MonoBehaviour
     public int heatUsageRate = 2;
 
     public GameEvent onDamage;
+    public GameEvent onPlayerFire;
+    public GameEvent onPlayerStopFire;
 
     public GameObject deformer;
     public Transform deformable;
@@ -23,6 +25,10 @@ public class LaserHeatGun : MonoBehaviour
     LineRenderer laser;
     RaycastHit hit;
     Vector3 laserDirection;
+
+    int acidLayer = 10;
+    int projectileLayer = 13;
+    int layerMask; 
 
     private void Awake()
     {
@@ -34,12 +40,12 @@ public class LaserHeatGun : MonoBehaviour
     void Start()
     {
         laser = GetComponent<LineRenderer>();
+        layerMask = ~((1 << acidLayer) | (1 << projectileLayer)); // NOT ~(1 << layer1) | ~(1 << layer2)
     }
 
     // Update is called once per frame
     void Update()
     {
-        //if (isAiming.Value && Input.GetKey(KeyCode.Q))
         if (isAiming.Value && (Input.GetMouseButton(0) || Input.GetKey(KeyCode.Q))) //Left click to shoot
         {
             isFiring.SetValue(true);
@@ -54,7 +60,6 @@ public class LaserHeatGun : MonoBehaviour
         }
         else
         {
-            
             StopFire();
         }
     }
@@ -64,18 +69,21 @@ public class LaserHeatGun : MonoBehaviour
         
         laser.enabled = true;
 
+        onPlayerFire.Raise();
+
         gunHeat.ApplyChange(-heatUsageRate);
         gunHeat.Value = (int)Mathf.Clamp(gunHeat.Value, 0, gunMaxHeat.Value);
 
         laserDirection = (Camera.main.transform.forward -gunMouth.right) * 100;
         laser.SetPosition(0, gunMouth.position);
 
-        if (Physics.Raycast(gunMouth.position, laserDirection, out hit))
+        if (Physics.Raycast(gunMouth.position, laserDirection, out hit, Mathf.Infinity, layerMask))
         {
             laser.SetPosition(1, hit.point);
             if (hit.collider.gameObject.layer == 11) //Layer 11 = Boss
             {
                 onDamage.Raise();
+
                 if(deformer && deformable)
                 {
                     deformer.transform.localPosition = deformable.InverseTransformPoint(hit.point);
@@ -90,7 +98,11 @@ public class LaserHeatGun : MonoBehaviour
 
     public void StopFire()
     {
-        isFiring.SetValue(false);
+        if(isFiring.Value)
+        {
+            onPlayerStopFire.Raise();
+            isFiring.SetValue(false);
+        }
         laser.enabled = false;
         if (!isOverheated.Value)
         {

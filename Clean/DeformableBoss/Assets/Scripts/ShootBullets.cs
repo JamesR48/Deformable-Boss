@@ -16,7 +16,7 @@ public class ShootBullets : MonoBehaviour
         fpPosition = firePoint.position + firePointOffset;
         fpRotation = firePoint.rotation;
 
-        GameObject bullet0 = bulletPool.GetPooledObject(fpPosition, fpRotation);
+        GameObject bullet0 = bulletPool.GetPooledObject(fpPosition, fpRotation); 
         GameObject bullet1 = bulletPool.GetPooledObject(fpPosition + (firePoint.right * 3f), fpRotation);
         GameObject bullet2 = bulletPool.GetPooledObject(fpPosition + (firePoint.right * -3f), fpRotation);
         GameObject bullet3 = bulletPool.GetPooledObject(fpPosition + (firePoint.right * 6f) + (firePoint.forward * -1.5f), fpRotation);

@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d789c1696465f848b8941a6c2423011, type: 3}
   m_Name: BossMaxHP
   m_EditorClassIdentifier: 
-  Value: 3000
+  Value: 1000

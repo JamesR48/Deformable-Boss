@@ -24,6 +24,7 @@ public class ProceduralController : MonoBehaviour
     public bool grounded = false;
 
     public FloatVariable rotationSpeed;
+    public BoolVariable isDead;
 
     void Start()
     {
@@ -106,17 +107,25 @@ public class ProceduralController : MonoBehaviour
         avgSurfaceDist /= legs.Length;
         dist = avgSurfaceDist;
 
-        if (grounded)
+        if (grounded && !isDead.Value)
         {
             transform.Translate(0, -(-avgSurfaceDist + desiredSufaceDist.Value) * 0.5f, 0, Space.Self);
             float positionX = Mathf.Clamp(transform.position.x, -0.51f, -0.51f);
             float positionZ = Mathf.Clamp(transform.position.z, 0, 0);
             transform.position = new Vector3(positionX, transform.position.y, positionZ);
         }
-        else if (!grounded)
+        if (isDead.Value)
         {
-            // Simple Gravity
-            transform.Translate(0, -20 * Time.deltaTime, 0, Space.World);
+            foreach (LegPlacement lp in legs)
+            {
+                lp.enabled = false;
+            }
         }
+
+        //else if (!grounded)
+        //{
+        //    //Simple Gravity
+        //    transform.Translate(0, -20 * Time.deltaTime, 0, Space.World);
+        //}
     }
 }

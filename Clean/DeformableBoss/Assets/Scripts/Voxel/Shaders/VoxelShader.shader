@@ -8,7 +8,7 @@
 		_InnerTex("InnerTexture", 2D) = "white" {}
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
-		Distance("Distance", Range(-20,20)) = 0.0
+		Distance("Distance", Range(-1,1)) = 0.0
 	}
 
 	SubShader
@@ -66,6 +66,8 @@
 
 		float regularUnion(float d1, float d2) {
 			return(min(d1, d2));
+			/*float h = max(Distance - abs(d1 - d2), 0.0);
+			return min(d1, d2) - h * h*0.25 / Distance;*/
 		}
 
 		struct appdata
@@ -100,7 +102,31 @@
 			float skullDist= distance(skeleSkull, IN.worldPos.xyz) - 1.2;
 			float tailDist = distance(skeleTail, IN.worldPos.xyz) - 3.5;
 			float chestDist= distance(skeleChest, IN.worldPos.xyz) - 2.6;
-			float mouthDist = distance(skeleMouth, IN.worldPos.xyz) - 0.3;
+			float mouthDist = distance(skeleMouth, IN.worldPos.xyz) - 0.1;
+			
+			//float skullDist = distance(skeleSkull, IN.worldPos.xyz);
+			//float tailDist = distance(skeleTail, IN.worldPos.xyz);
+			//float chestDist = distance(skeleChest, IN.worldPos.xyz);
+			//float mouthDist = distance(skeleMouth, IN.worldPos.xyz);
+
+			//if (skullDist < 2 || tailDist < 4 || chestDist < 3.2 || mouthDist < 0.7)
+			//{
+			//	skullDist = distance(skeleSkull, IN.worldPos.xyz) - 1.2;
+			//	tailDist = distance(skeleTail, IN.worldPos.xyz) - 3.5;
+			//	chestDist = distance(skeleChest, IN.worldPos.xyz) - 2.6;
+			//	mouthDist = distance(skeleMouth, IN.worldPos.xyz) - 0.3;
+			//	float densUnion = regularUnion(regularUnion(skullDist, mouthDist), regularUnion(tailDist, chestDist));
+			//	fixed4 value = lerp(_ColorInner, _Color, densUnion);
+			//	o.Albedo = value.rgb; // lerp colors
+			//	o.Emission = value.rgb;
+			//	/*o.Albedo = _ColorInner.rgb;
+			//	o.Emission = _ColorInner.rgb;*/
+			//}
+			//else
+			//{
+			//	o.Albedo = _Color.rgb;
+			//	o.Emission = _Color.rgb;
+			//}
 
 			float densUnion = regularUnion(regularUnion(skullDist, mouthDist), regularUnion(tailDist, chestDist) );
 
@@ -108,6 +134,7 @@
 			fixed4 value = lerp(_ColorInner, _Color, densUnion); //lerp colors
 
 			//o.Albedo = value; // lerp textures
+			
 			o.Albedo = value.rgb; // lerp colors
 			o.Emission = value.rgb;
 

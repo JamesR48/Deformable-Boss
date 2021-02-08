@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: c009f1e1c7d2e114c91db525badf7b80
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _Voronoi1: {fileID: 2800000, guid: 1641882d18f793240ad8441f54d3a53c, type: 3}
+  - _Voronoi2: {fileID: 2800000, guid: 1b97fd71524683d48bf008be80cfd239, type: 3}
+  - _node_7248: {fileID: 2800000, guid: 89a16046b17f40d48b3d2d7ea17a29f6, type: 3}
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

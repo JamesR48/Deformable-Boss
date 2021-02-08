@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class ContainerSetter : MonoBehaviour
 {
-    public IntVariable containerVariable;
+    public IntReference containerVariable;
     public IntReference containerQuantity;
     public bool hasDelay = false;
     public float delayTime = 0.1f;
