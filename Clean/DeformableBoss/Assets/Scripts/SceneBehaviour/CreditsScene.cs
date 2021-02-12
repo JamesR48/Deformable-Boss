@@ -16,7 +16,7 @@ public class CreditsScene : MonoBehaviour
 
         creditScene = SceneManager.GetActiveScene();
 
-        if (creditScene.buildIndex == 1)
+        if (creditScene.buildIndex == 2)
         {
             playerAnimator.SetLayerWeight(1, 0);
             playerAnimator.Play("Dance");

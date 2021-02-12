@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 
 public class RestartGame : MonoBehaviour
 {
+    public float delayTime = 0.3f;
     Scene actualScene;
 
     // Start is called before the first frame update
@@ -15,6 +16,13 @@ public class RestartGame : MonoBehaviour
 
     public void RestartScene()
     {
+        StartCoroutine(Delay());
+    }
+
+    IEnumerator Delay()
+    {
+        yield return new WaitForSecondsRealtime(delayTime);
+
         SceneManager.LoadScene(actualScene.buildIndex);
     }
 }

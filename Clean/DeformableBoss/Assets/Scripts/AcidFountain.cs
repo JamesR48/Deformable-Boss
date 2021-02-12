@@ -20,6 +20,8 @@ public class AcidFountain : MonoBehaviour
     {
         GameObject projectileToPlayer = acidPool.GetPooledObject(transform.position+ acidOriginOffset, Quaternion.identity);
         projectileToPlayer.GetComponent<BezierMotion>().endPoint = playerTransform.position;
+        projectileToPlayer.GetComponent<ExplodeOnCollision>().makeSound = true;
+
         GameObject markToPlayer = markPool.GetPooledObject(new Vector3(playerTransform.position.x, -10.7f, playerTransform.position.z), Quaternion.identity);
 
         for (int i = 0; i < 3; i++)

@@ -6,6 +6,7 @@ TagManager:
   tags:
   - IndicatorParent
   - Canvas
+  - FXParent
   layers:
   - Default
   - TransparentFX

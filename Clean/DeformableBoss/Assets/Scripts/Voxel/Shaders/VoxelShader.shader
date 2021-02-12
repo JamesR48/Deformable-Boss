@@ -20,7 +20,13 @@
 		CGPROGRAM
 
 		#pragma surface surf Standard vertex:vert fullforwardshadows addshadow
-		#pragma target 5.0
+		
+#if SHADER_TARGET < 50
+			#pragma target 4.5
+#else
+			#pragma target 5.0
+#endif
+
 		#include "UnityCG.cginc"
 
 		struct Vertex
@@ -44,14 +50,16 @@
 		float3 skeleChest;
 		float3 skeleMouth;
 
-#ifdef SHADER_API_D3D11
+//#ifdef SHADER_API_D3D11
+#if defined(SHADER_API_GLES) || defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_VULKAN) || defined(SHADER_API_GLCORE)
 		StructuredBuffer<Vertex> _Buffer;
 		float4x4 objMat;
 #endif
 		
 		void GetVertexData(in uint id, inout float4 position, inout float3 normal, inout float4 uv0, inout float4 uv1, inout float4 color)
 		{
-#ifdef SHADER_API_D3D11
+//#ifdef SHADER_API_D3D11
+#if defined(SHADER_API_GLES) || defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_VULKAN) || defined(SHADER_API_GLCORE)
 			Vertex vert = _Buffer[id];
 			//position.xyz = vert.position.xyz;
 			position = float4(vert.position.xyz, 1.0);
