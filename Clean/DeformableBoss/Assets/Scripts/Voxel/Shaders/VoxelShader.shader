@@ -50,7 +50,6 @@
 		float3 skeleChest;
 		float3 skeleMouth;
 
-//#ifdef SHADER_API_D3D11
 #if defined(SHADER_API_GLES) || defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_VULKAN) || defined(SHADER_API_GLCORE)
 		StructuredBuffer<Vertex> _Buffer;
 		float4x4 objMat;
@@ -58,7 +57,6 @@
 		
 		void GetVertexData(in uint id, inout float4 position, inout float3 normal, inout float4 uv0, inout float4 uv1, inout float4 color)
 		{
-//#ifdef SHADER_API_D3D11
 #if defined(SHADER_API_GLES) || defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_VULKAN) || defined(SHADER_API_GLCORE)
 			Vertex vert = _Buffer[id];
 			//position.xyz = vert.position.xyz;
@@ -74,8 +72,6 @@
 
 		float regularUnion(float d1, float d2) {
 			return(min(d1, d2));
-			/*float h = max(Distance - abs(d1 - d2), 0.0);
-			return min(d1, d2) - h * h*0.25 / Distance;*/
 		}
 
 		struct appdata

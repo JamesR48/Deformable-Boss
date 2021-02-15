@@ -31,7 +31,7 @@ public class ShootBullets : MonoBehaviour
         bullets[5] = bulletPool.GetPooledObject(fpPosition + (firePoint.right * 9f) + (firePoint.forward * -2f), fpRotation);
         bullets[6] = bulletPool.GetPooledObject(fpPosition + (firePoint.right * -9f) + (firePoint.forward * -2f), fpRotation);
 
-        for(int i = 0; i < bullets.Length; i++)
+        for (int i = 0; i < bullets.Length; i++)
         {
             bullets[i].GetComponent<ExplodeOnCollision>().explosionSourceGO = explosionSoundGO;
         }

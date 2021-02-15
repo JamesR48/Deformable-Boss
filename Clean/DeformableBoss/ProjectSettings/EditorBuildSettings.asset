@@ -12,6 +12,9 @@ EditorBuildSettings:
     path: Assets/Scenes/BossScene.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
+    path: Assets/Scenes/BossSceneMesh.unity
+    guid: 9f4262aaf0eb2554e9e8d60f84bcae01
+  - enabled: 1
     path: Assets/Scenes/CreditsScene.unity
     guid: c7de9af6de8cb4049b82dfc4c3b07f60
   m_configObjects: {}

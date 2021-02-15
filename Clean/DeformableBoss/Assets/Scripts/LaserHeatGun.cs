@@ -6,6 +6,10 @@ using UnityEngine;
 public class LaserHeatGun : MonoBehaviour
 {
     public Transform gunMouth;
+    public GameObject hitEffect;
+    public GameObject glowEffect;
+    public GameObject smokeEffect;
+
     public BoolVariable isFiring;
     public BoolVariable isAiming;
     public BoolVariable isOverheated;
@@ -28,10 +32,24 @@ public class LaserHeatGun : MonoBehaviour
 
     int acidLayer = 10;
     int projectileLayer = 13;
-    int layerMask; 
+    int layerMask;
+
+    GameObject hitEffectInstance;
+    ParticleSystem hitParticles;
+    GameObject glowEffectInstance;
+    ParticleSystem glowParticles;
+    GameObject smokeEffectInstance;
+    ParticleSystem smokeParticles;
 
     private void Awake()
     {
+        hitEffectInstance = Instantiate(hitEffect, gunMouth);
+        hitParticles = hitEffectInstance.transform.GetChild(0).GetComponent<ParticleSystem>();
+        glowEffectInstance = Instantiate(glowEffect, gunMouth);
+        glowParticles = glowEffectInstance.transform.GetChild(0).GetComponent<ParticleSystem>();
+        smokeEffectInstance = Instantiate(smokeEffect, gunMouth);
+        smokeParticles = smokeEffectInstance.transform.GetChild(0).GetComponent<ParticleSystem>();
+
         gunHeat.SetValue(gunMaxHeat);
         isOverheated.SetValue(false);
     }
@@ -56,6 +74,19 @@ public class LaserHeatGun : MonoBehaviour
             else
             {
                 laser.enabled = false;
+                if (hitParticles.isPlaying)
+                {
+                    hitParticles.Stop();
+                }
+                if (glowParticles.isPlaying)
+                {
+                    glowParticles.Stop();
+                }
+
+                if (!smokeParticles.isPlaying)
+                {
+                    smokeParticles.Play();
+                }
             }
         }
         else
@@ -77,9 +108,21 @@ public class LaserHeatGun : MonoBehaviour
         laserDirection = (Camera.main.transform.forward -gunMouth.right) * 100;
         laser.SetPosition(0, gunMouth.position);
 
+        if (!glowParticles.isPlaying)
+        {
+            glowParticles.Play();
+        }
+
         if (Physics.Raycast(gunMouth.position, laserDirection, out hit, Mathf.Infinity, layerMask))
         {
             laser.SetPosition(1, hit.point);
+
+            hitParticles.transform.position = hit.point;
+            if (!hitParticles.isPlaying)
+            {
+                hitParticles.Play();
+            }
+
             if (hit.collider.gameObject.layer == 11) //Layer 11 = Boss
             {
                 onDamage.Raise();
@@ -93,6 +136,11 @@ public class LaserHeatGun : MonoBehaviour
         else
         {
             laser.SetPosition(1, laserDirection);
+
+            if(hitParticles.isPlaying)
+            {
+                hitParticles.Stop();
+            }
         }
     }
 
@@ -102,7 +150,21 @@ public class LaserHeatGun : MonoBehaviour
         {
             onPlayerStopFire.Raise();
             isFiring.SetValue(false);
+
+            if (hitParticles.isPlaying)
+            {
+                hitParticles.Stop();
+            }
+            if (glowParticles.isPlaying)
+            {
+                glowParticles.Stop();
+            }
+            if (smokeParticles.isPlaying)
+            {
+                smokeParticles.Stop();
+            }
         }
+
         laser.enabled = false;
         if (!isOverheated.Value)
         {

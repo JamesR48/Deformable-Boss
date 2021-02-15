@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 public class CreditsScene : MonoBehaviour
 {
     public Animator playerAnimator;
+    public GameObject pillars;
 
     Scene creditScene;
 
@@ -16,10 +17,15 @@ public class CreditsScene : MonoBehaviour
 
         creditScene = SceneManager.GetActiveScene();
 
-        if (creditScene.buildIndex == 2)
+        if (creditScene.buildIndex == 3)
         {
             playerAnimator.SetLayerWeight(1, 0);
             playerAnimator.Play("Dance");
+        }
+
+        if (!pillars.activeSelf)
+        {
+            pillars.SetActive(true);
         }
     }
 }

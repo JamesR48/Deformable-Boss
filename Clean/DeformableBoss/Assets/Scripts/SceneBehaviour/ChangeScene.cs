@@ -10,11 +10,13 @@ public class ChangeScene : MonoBehaviour
 
     void Start()
     {
-        if (SceneManager.GetActiveScene().buildIndex != 1)
+        Scene activeScene = SceneManager.GetActiveScene();
+
+        if (activeScene.buildIndex == 0 || activeScene.buildIndex == 3)
         {
             Time.timeScale = 1;
             Cursor.lockState = CursorLockMode.None;
-        }    
+        }
     }
 
     public void LoadScene()

@@ -7,9 +7,12 @@ public class BossAudioManager : MonoBehaviour
     public AudioSource bossSource;
     public AudioSource bossFX;
     public AudioSource bossAttackSource;
+    public AudioSource bossDeathSource;
 
     public BoolVariable isAttacking;
     public BoolVariable isDead;
+
+    bool canPlay = true;
 
     // Start is called before the first frame update
     void Start()
@@ -20,16 +23,19 @@ public class BossAudioManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isAttacking.Value)
+        if (canPlay)
         {
-            if (!bossAttackSource.isPlaying)
+            if (isAttacking.Value && !isDead.Value)
             {
-                bossAttackSource.Play();
+                if (!bossAttackSource.isPlaying)
+                {
+                    bossAttackSource.Play();
+                }
             }
-        }
-        else
-        {
-            bossAttackSource.Stop();
+            else
+            {
+                bossAttackSource.Stop();
+            }
         }
     }
 
@@ -41,15 +47,18 @@ public class BossAudioManager : MonoBehaviour
         }
         else if (isDead.Value)
         {
-            bossSource.clip = clip;
-            bossSource.priority = 0;
-            bossSource.Play();
+            bossSource.Stop();
         }
+    }
+
+    public void PlayDeath()
+    {
+        bossDeathSource.Play();
     }
 
     public void PlayFX(AudioClip clip)
     {
-        if(bossFX.clip != clip)
+        if (bossFX.clip != clip)
         {
             bossFX.clip = clip;
         }
@@ -58,4 +67,29 @@ public class BossAudioManager : MonoBehaviour
             bossFX.Play();
         }
     }
+
+    public void StopAllAudio()
+    {
+        canPlay = false;
+        if (!isDead.Value)
+        {
+            bossSource.Pause();
+            bossFX.Pause();
+            bossAttackSource.Pause();
+        }
+        else
+        {
+            bossSource.Stop();
+            bossAttackSource.Stop();
+        }
+    }
+
+    public void EnableAllAudio()
+    {
+        canPlay = true;
+        bossSource.UnPause();
+        bossFX.UnPause();
+        bossAttackSource.UnPause();
+    }
+
 }

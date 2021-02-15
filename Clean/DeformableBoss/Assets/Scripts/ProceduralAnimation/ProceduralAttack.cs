@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class ProceduralAttack : MonoBehaviour
 {
+    public GameObject chargeEffect;
+    public Transform shootPoint;
     public FloatVariable desiredSufaceDist; //-6 default
     public GameEvent attackEvent;
     public float rotationAngle = -45;
@@ -16,9 +18,15 @@ public class ProceduralAttack : MonoBehaviour
     Quaternion newRotation;
     float eulerRotX = 0, eulerRotY = 0, eulerRotZ = 0;
 
+    GameObject chargeFXInstance;
+    ParticleSystem chargeParticles;
+
     void Awake()
     {
-        isAttacking.SetValue(false);    
+        isAttacking.SetValue(false);
+
+        chargeFXInstance = Instantiate(chargeEffect,shootPoint);
+        chargeParticles = chargeFXInstance.transform.GetChild(0).GetComponent<ParticleSystem>();
     }
 
     // Update is called once per frame
@@ -71,8 +79,16 @@ public class ProceduralAttack : MonoBehaviour
         attack = true;
         yield return new WaitForSeconds(3f);
         isAttacking.SetValue(true); //raiseAttackMotionEvent()
+        if(!chargeParticles.isPlaying)
+        {
+            chargeParticles.Play();
+        }
         yield return new WaitForSeconds(5f);
         isAttacking.SetValue(false); //raiseEndAttackMotionEvent()
+        if(chargeParticles.isPlaying)
+        {
+            chargeParticles.Stop();
+        }
         //desiredSufaceDist.SetValue(-6);
         yield return new WaitForSeconds(0.1f);
         attackEvent.Raise();  //raiseAttackEvent()
@@ -87,5 +103,13 @@ public class ProceduralAttack : MonoBehaviour
             result += 360f;
         }
         return result;
+    }
+
+    public void StopEffects()
+    {
+        if (chargeParticles.isPlaying)
+        {
+            chargeParticles.Stop();
+        }
     }
 }
