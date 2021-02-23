@@ -105,7 +105,7 @@ public class LaserHeatGun : MonoBehaviour
         gunHeat.ApplyChange(-heatUsageRate);
         gunHeat.Value = (int)Mathf.Clamp(gunHeat.Value, 0, gunMaxHeat.Value);
 
-        laserDirection = (Camera.main.transform.forward -gunMouth.right) * 100;
+        laserDirection = (Camera.main.transform.forward) * 100;
         laser.SetPosition(0, gunMouth.position);
 
         if (!glowParticles.isPlaying)
