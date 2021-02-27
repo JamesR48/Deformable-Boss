@@ -167,7 +167,7 @@ public class MeshGenerator : MonoBehaviour
     {
         int numPoints = numPointsPerAxis * numPointsPerAxis * numPointsPerAxis;
 
-        triangleBuffer = new ComputeBuffer(numPoints*5, sizeof(float) * 3 * 3, ComputeBufferType.Append);
+        triangleBuffer = new ComputeBuffer(numPoints*5, sizeof(float) * 8 * 3, ComputeBufferType.Append);
         pointsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 4);
 
         argBuffer = new ComputeBuffer(1, DrawCallArgBuffer.size, ComputeBufferType.IndirectArguments);

@@ -1,4 +1,6 @@
-﻿Shader "Custom/VoxelShader"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Custom/VoxelShader"
 {
 	Properties
 	{
@@ -31,8 +33,9 @@
 
 		struct Vertex
 		{
-			float3 position;
+			float4 position;
 			float3 normal;
+			float dummy;
 		};
 
 		half _Glossiness;
@@ -55,17 +58,16 @@
 		float4x4 objMat;
 #endif
 		
-		void GetVertexData(in uint id, inout float4 position, inout float3 normal, inout float4 uv0, inout float4 uv1, inout float4 color)
+		void GetVertexData(in uint id, inout float4 position, inout float3 normal)
 		{
 #if defined(SHADER_API_GLES) || defined(SHADER_API_D3D11) || defined(SHADER_API_GLES3) || defined(SHADER_API_VULKAN) || defined(SHADER_API_GLCORE)
 			Vertex vert = _Buffer[id];
-			//position.xyz = vert.position.xyz;
-			position = float4(vert.position.xyz, 1.0);
-			//position = vert.position;
+			//position = float4(vert.position.xyz, 1.0);
+			position = vert.position;
 			normal = vert.normal;
 
-			//position = mul(objMat, float4(position.xyz, 1.0));
-			position = mul(objMat, position);
+			position = mul(objMat, float4(position.xyz, 1));
+			//position = mul(objMat, position);
 			normal = normalize(mul((float3x3)objMat, normal));
 #endif
 		}
@@ -89,16 +91,17 @@
 
 		struct Input
 		{
-			float2 uv_MainTex;
 			float3 worldPos;
+			float2 uv_MainTex;
 			float3 worldNormal;
 			float4 vertColor;
 		};
 
-		void vert(inout appdata v, out Input o)
+		void vert(inout appdata v, out Input o) //: SV_POSITION
 		{
-			GetVertexData(v.vid, v.vertex, v.normal, v.texcoord, v.texcoord1, v.color);
+			GetVertexData(v.vid, v.vertex, v.normal);
 			UNITY_INITIALIZE_OUTPUT(Input, o);
+			//return UnityObjectToClipPos(v.vertex);
 		}
 
 		void surf(Input IN, inout SurfaceOutputStandard o)

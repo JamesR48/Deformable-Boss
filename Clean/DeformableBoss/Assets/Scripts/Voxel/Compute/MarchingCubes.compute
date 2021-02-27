@@ -1,14 +1,15 @@
 ﻿#pragma kernel March
 #include "/Includes/MarchTables.compute"
 
-static const int numThreads = 8;
+static const uint numThreads = 8;
 
 SamplerState myLinearClampSampler;
 
 struct Vertex
 {
-	float3 vPosition;
+	float4 vPosition;
 	float3 vNormal;
+	float dummy;
 };
 
 struct Triangle {
@@ -23,8 +24,9 @@ float isoLevel;
 
 float3 interpolateVerts(float4 v1, float4 v2) {
     float t = (isoLevel - v1.w) / (v2.w - v1.w);
-    //return float4(v1.xyz + t * (v2.xyz-v1.xyz), 0);
+    //return float4(v1.xyz + t * (v2.xyz-v1.xyz), 1.0);
 	return v1.xyz + t * (v2.xyz - v1.xyz);
+	//return v1 + t * (v2 - v1);
 }
 
 int indexFromCoord(int x, int y, int z) {
@@ -80,15 +82,19 @@ void cubes(int numTris, float3 avgPosX, float3 avgPosY, float3 avgPosZ, int cube
 		int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i + 2]];
 		int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i + 2]];
 
-		Triangle tri;
+		Triangle tri = (Triangle)0;
 		
-		Vertex v0;
-		Vertex v1;
-		Vertex v2;
+		Vertex v0 = (Vertex)0;
+		Vertex v1 = (Vertex)0;
+		Vertex v2 = (Vertex)0;
 
-		v0.vPosition = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+		v0.vPosition =  float4( interpolateVerts(cubeCorners[a0], cubeCorners[b0]) ,1.0);
+		v1.vPosition = float4( interpolateVerts(cubeCorners[a1], cubeCorners[b1]) ,1.0);
+		v2.vPosition = float4( interpolateVerts(cubeCorners[a2], cubeCorners[b2]) ,1.0);
+
+		/*v0.vPosition = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
 		v1.vPosition = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
-		v2.vPosition = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+		v2.vPosition = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);*/
 
 		//Flat shading normals
 		/*v0.vNormal += cross(v1.vPosition -v0.vPosition, v2.vPosition -v0.vPosition);
@@ -97,12 +103,16 @@ void cubes(int numTris, float3 avgPosX, float3 avgPosY, float3 avgPosZ, int cube
 
 		//Smooth shading normals
 		v0.vNormal = float3(0, 0, 0); v1.vNormal = float3(0, 0, 0); v2.vNormal = float3(0, 0, 0);
-		float3 e1 = v1.vPosition - v0.vPosition;
-		float3 e2 = v2.vPosition - v0.vPosition;
+		float3 e1 = v1.vPosition.xyz - v0.vPosition.xyz;
+		float3 e2 = v2.vPosition.xyz - v0.vPosition.xyz;
 		float3 no = cross(e1, e2);
 		v0.vNormal += no;
 		v1.vNormal += no;
 		v2.vNormal += no;
+
+		v0.dummy = 0;
+		v1.dummy = 0;
+		v2.dummy = 0;
 
 		tri.v[0] = v0;
 		tri.v[1] = v1;

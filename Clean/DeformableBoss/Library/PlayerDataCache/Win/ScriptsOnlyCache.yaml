@@ -2093,4 +2093,4 @@ ScriptsOnlyBuild:
   - Assets/Scenes/BossScene.unity
   - Assets/Scenes/BossSceneMesh.unity
   - Assets/Scenes/CreditsScene.unity
-  playerPath: D:/Unity/MarchingCubes/Builds/Spoxel.exe
+  playerPath: D:/Unity/MarchingCubes/Builds/TESTINGBUILD/Spoxel.exe
